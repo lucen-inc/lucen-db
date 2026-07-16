@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as GraphRouteImport } from './routes/graph'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PeopleIndexRouteImport } from './routes/people.index'
 import { Route as OrganizationsIndexRouteImport } from './routes/organizations.index'
 import { Route as PeopleIdRouteImport } from './routes/people.$id'
 import { Route as OrganizationsIdRouteImport } from './routes/organizations.$id'
 
+const GraphRoute = GraphRouteImport.update({
+  id: '/graph',
+  path: '/graph',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -43,6 +49,7 @@ const OrganizationsIdRoute = OrganizationsIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/graph': typeof GraphRoute
   '/organizations/$id': typeof OrganizationsIdRoute
   '/people/$id': typeof PeopleIdRoute
   '/organizations/': typeof OrganizationsIndexRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/graph': typeof GraphRoute
   '/organizations/$id': typeof OrganizationsIdRoute
   '/people/$id': typeof PeopleIdRoute
   '/organizations': typeof OrganizationsIndexRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/graph': typeof GraphRoute
   '/organizations/$id': typeof OrganizationsIdRoute
   '/people/$id': typeof PeopleIdRoute
   '/organizations/': typeof OrganizationsIndexRoute
@@ -67,15 +76,23 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/graph'
     | '/organizations/$id'
     | '/people/$id'
     | '/organizations/'
     | '/people/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/organizations/$id' | '/people/$id' | '/organizations' | '/people'
+  to:
+    | '/'
+    | '/graph'
+    | '/organizations/$id'
+    | '/people/$id'
+    | '/organizations'
+    | '/people'
   id:
     | '__root__'
     | '/'
+    | '/graph'
     | '/organizations/$id'
     | '/people/$id'
     | '/organizations/'
@@ -84,6 +101,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  GraphRoute: typeof GraphRoute
   OrganizationsIdRoute: typeof OrganizationsIdRoute
   PeopleIdRoute: typeof PeopleIdRoute
   OrganizationsIndexRoute: typeof OrganizationsIndexRoute
@@ -92,6 +110,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/graph': {
+      id: '/graph'
+      path: '/graph'
+      fullPath: '/graph'
+      preLoaderRoute: typeof GraphRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -132,6 +157,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  GraphRoute: GraphRoute,
   OrganizationsIdRoute: OrganizationsIdRoute,
   PeopleIdRoute: PeopleIdRoute,
   OrganizationsIndexRoute: OrganizationsIndexRoute,
