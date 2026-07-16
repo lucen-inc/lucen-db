@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PipelineRouteImport } from './routes/pipeline'
+import { Route as NewsRouteImport } from './routes/news'
 import { Route as GraphRouteImport } from './routes/graph'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PeopleIndexRouteImport } from './routes/people.index'
@@ -20,6 +21,11 @@ import { Route as OrganizationsIdRouteImport } from './routes/organizations.$id'
 const PipelineRoute = PipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsRoute = NewsRouteImport.update({
+  id: '/news',
+  path: '/news',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GraphRoute = GraphRouteImport.update({
@@ -56,6 +62,7 @@ const OrganizationsIdRoute = OrganizationsIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/graph': typeof GraphRoute
+  '/news': typeof NewsRoute
   '/pipeline': typeof PipelineRoute
   '/organizations/$id': typeof OrganizationsIdRoute
   '/people/$id': typeof PeopleIdRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/graph': typeof GraphRoute
+  '/news': typeof NewsRoute
   '/pipeline': typeof PipelineRoute
   '/organizations/$id': typeof OrganizationsIdRoute
   '/people/$id': typeof PeopleIdRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/graph': typeof GraphRoute
+  '/news': typeof NewsRoute
   '/pipeline': typeof PipelineRoute
   '/organizations/$id': typeof OrganizationsIdRoute
   '/people/$id': typeof PeopleIdRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/graph'
+    | '/news'
     | '/pipeline'
     | '/organizations/$id'
     | '/people/$id'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/graph'
+    | '/news'
     | '/pipeline'
     | '/organizations/$id'
     | '/people/$id'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/graph'
+    | '/news'
     | '/pipeline'
     | '/organizations/$id'
     | '/people/$id'
@@ -114,6 +126,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   GraphRoute: typeof GraphRoute
+  NewsRoute: typeof NewsRoute
   PipelineRoute: typeof PipelineRoute
   OrganizationsIdRoute: typeof OrganizationsIdRoute
   PeopleIdRoute: typeof PeopleIdRoute
@@ -128,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/pipeline'
       fullPath: '/pipeline'
       preLoaderRoute: typeof PipelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/news': {
+      id: '/news'
+      path: '/news'
+      fullPath: '/news'
+      preLoaderRoute: typeof NewsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/graph': {
@@ -178,6 +198,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   GraphRoute: GraphRoute,
+  NewsRoute: NewsRoute,
   PipelineRoute: PipelineRoute,
   OrganizationsIdRoute: OrganizationsIdRoute,
   PeopleIdRoute: PeopleIdRoute,

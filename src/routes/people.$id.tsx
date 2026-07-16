@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { PageHeader } from "@/components/lid/app-shell";
 import { PersonAvatar, ScoreBar, ScoreRing } from "@/components/lid/score-ring";
 import { EntityAvatar } from "@/components/lid/score-ring";
-import { orgById, personById, relationshipsFor, personById as _p } from "@/lib/mock-data";
+import { orgById, personById, relationshipsFor } from "@/lib/mock-data";
 import { people as allPeople } from "@/lib/mock-data";
 import { Mail, Phone, Linkedin, MapPin, Building2 } from "lucide-react";
 
