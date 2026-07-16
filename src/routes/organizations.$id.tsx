@@ -117,7 +117,7 @@ function OrgDetail() {
                 <Meta icon={Building2}>{org.locations} locations</Meta>
               </div>
               <div className="mt-4 flex flex-wrap gap-1.5">
-                {org.tags.map((t) => (
+                {org.tags.map((t: string) => (
                   <span
                     key={t}
                     className="rounded-full border border-border/60 bg-elevated/60 px-2.5 py-0.5 text-[11px] text-muted-foreground"
@@ -365,7 +365,7 @@ function OrgDetail() {
               Markets
             </h3>
             <div className="flex flex-wrap gap-1.5">
-              {org.countries.map((c) => (
+              {org.countries.map((c: string) => (
                 <span
                   key={c}
                   className="rounded-md border border-border/60 bg-elevated/60 px-2 py-0.5 text-[11.5px]"
