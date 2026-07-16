@@ -9,38 +9,154 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PipelineRouteImport } from './routes/pipeline'
+import { Route as NewsRouteImport } from './routes/news'
+import { Route as GraphRouteImport } from './routes/graph'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PeopleIndexRouteImport } from './routes/people.index'
+import { Route as OrganizationsIndexRouteImport } from './routes/organizations.index'
+import { Route as PeopleIdRouteImport } from './routes/people.$id'
+import { Route as OrganizationsIdRouteImport } from './routes/organizations.$id'
 
+const PipelineRoute = PipelineRouteImport.update({
+  id: '/pipeline',
+  path: '/pipeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsRoute = NewsRouteImport.update({
+  id: '/news',
+  path: '/news',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GraphRoute = GraphRouteImport.update({
+  id: '/graph',
+  path: '/graph',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PeopleIndexRoute = PeopleIndexRouteImport.update({
+  id: '/people/',
+  path: '/people/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrganizationsIndexRoute = OrganizationsIndexRouteImport.update({
+  id: '/organizations/',
+  path: '/organizations/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PeopleIdRoute = PeopleIdRouteImport.update({
+  id: '/people/$id',
+  path: '/people/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrganizationsIdRoute = OrganizationsIdRouteImport.update({
+  id: '/organizations/$id',
+  path: '/organizations/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/graph': typeof GraphRoute
+  '/news': typeof NewsRoute
+  '/pipeline': typeof PipelineRoute
+  '/organizations/$id': typeof OrganizationsIdRoute
+  '/people/$id': typeof PeopleIdRoute
+  '/organizations/': typeof OrganizationsIndexRoute
+  '/people/': typeof PeopleIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/graph': typeof GraphRoute
+  '/news': typeof NewsRoute
+  '/pipeline': typeof PipelineRoute
+  '/organizations/$id': typeof OrganizationsIdRoute
+  '/people/$id': typeof PeopleIdRoute
+  '/organizations': typeof OrganizationsIndexRoute
+  '/people': typeof PeopleIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/graph': typeof GraphRoute
+  '/news': typeof NewsRoute
+  '/pipeline': typeof PipelineRoute
+  '/organizations/$id': typeof OrganizationsIdRoute
+  '/people/$id': typeof PeopleIdRoute
+  '/organizations/': typeof OrganizationsIndexRoute
+  '/people/': typeof PeopleIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/graph'
+    | '/news'
+    | '/pipeline'
+    | '/organizations/$id'
+    | '/people/$id'
+    | '/organizations/'
+    | '/people/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/graph'
+    | '/news'
+    | '/pipeline'
+    | '/organizations/$id'
+    | '/people/$id'
+    | '/organizations'
+    | '/people'
+  id:
+    | '__root__'
+    | '/'
+    | '/graph'
+    | '/news'
+    | '/pipeline'
+    | '/organizations/$id'
+    | '/people/$id'
+    | '/organizations/'
+    | '/people/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  GraphRoute: typeof GraphRoute
+  NewsRoute: typeof NewsRoute
+  PipelineRoute: typeof PipelineRoute
+  OrganizationsIdRoute: typeof OrganizationsIdRoute
+  PeopleIdRoute: typeof PeopleIdRoute
+  OrganizationsIndexRoute: typeof OrganizationsIndexRoute
+  PeopleIndexRoute: typeof PeopleIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/pipeline': {
+      id: '/pipeline'
+      path: '/pipeline'
+      fullPath: '/pipeline'
+      preLoaderRoute: typeof PipelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/news': {
+      id: '/news'
+      path: '/news'
+      fullPath: '/news'
+      preLoaderRoute: typeof NewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/graph': {
+      id: '/graph'
+      path: '/graph'
+      fullPath: '/graph'
+      preLoaderRoute: typeof GraphRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +164,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/people/': {
+      id: '/people/'
+      path: '/people'
+      fullPath: '/people/'
+      preLoaderRoute: typeof PeopleIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/organizations/': {
+      id: '/organizations/'
+      path: '/organizations'
+      fullPath: '/organizations/'
+      preLoaderRoute: typeof OrganizationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/people/$id': {
+      id: '/people/$id'
+      path: '/people/$id'
+      fullPath: '/people/$id'
+      preLoaderRoute: typeof PeopleIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/organizations/$id': {
+      id: '/organizations/$id'
+      path: '/organizations/$id'
+      fullPath: '/organizations/$id'
+      preLoaderRoute: typeof OrganizationsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  GraphRoute: GraphRoute,
+  NewsRoute: NewsRoute,
+  PipelineRoute: PipelineRoute,
+  OrganizationsIdRoute: OrganizationsIdRoute,
+  PeopleIdRoute: PeopleIdRoute,
+  OrganizationsIndexRoute: OrganizationsIndexRoute,
+  PeopleIndexRoute: PeopleIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
