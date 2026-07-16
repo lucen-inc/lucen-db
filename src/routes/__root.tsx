@@ -73,24 +73,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lucen Intelligence Database" },
+      { title: "Dashboard · Lucen Intelligence Database" },
       {
         name: "description",
         content:
           "The intelligence operating system for Lucen — organizations, people, buildings and relationships in one connected graph.",
       },
-      { property: "og:title", content: "Lucen Intelligence Database" },
+      { property: "og:title", content: "Dashboard · Lucen Intelligence Database" },
       {
         property: "og:description",
         content:
-          "A living intelligence platform mapping organizations, executives, brands and relationships.",
+          "The intelligence operating system for Lucen — organizations, people, buildings and relationships in one connected graph.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Dashboard · Lucen Intelligence Database" },
+      { name: "twitter:description", content: "The intelligence operating system for Lucen — organizations, people, buildings and relationships in one connected graph." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/Aho1PfCYoITTu3qbzSI7zPyEErI2/social-images/social-1784177034114-real-estate_-skyline-of-tommorow.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/Aho1PfCYoITTu3qbzSI7zPyEErI2/social-images/social-1784177034114-real-estate_-skyline-of-tommorow.webp" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       {
         rel: "preconnect",
         href: "https://rsms.me/",
