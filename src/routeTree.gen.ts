@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PeopleIndexRouteImport } from './routes/people.index'
 import { Route as OrganizationsIndexRouteImport } from './routes/organizations.index'
+import { Route as PeopleIdRouteImport } from './routes/people.$id'
 import { Route as OrganizationsIdRouteImport } from './routes/organizations.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +30,11 @@ const OrganizationsIndexRoute = OrganizationsIndexRouteImport.update({
   path: '/organizations/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PeopleIdRoute = PeopleIdRouteImport.update({
+  id: '/people/$id',
+  path: '/people/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrganizationsIdRoute = OrganizationsIdRouteImport.update({
   id: '/organizations/$id',
   path: '/organizations/$id',
@@ -38,12 +44,14 @@ const OrganizationsIdRoute = OrganizationsIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/organizations/$id': typeof OrganizationsIdRoute
+  '/people/$id': typeof PeopleIdRoute
   '/organizations/': typeof OrganizationsIndexRoute
   '/people/': typeof PeopleIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/organizations/$id': typeof OrganizationsIdRoute
+  '/people/$id': typeof PeopleIdRoute
   '/organizations': typeof OrganizationsIndexRoute
   '/people': typeof PeopleIndexRoute
 }
@@ -51,20 +59,33 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/organizations/$id': typeof OrganizationsIdRoute
+  '/people/$id': typeof PeopleIdRoute
   '/organizations/': typeof OrganizationsIndexRoute
   '/people/': typeof PeopleIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/organizations/$id' | '/organizations/' | '/people/'
+  fullPaths:
+    | '/'
+    | '/organizations/$id'
+    | '/people/$id'
+    | '/organizations/'
+    | '/people/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/organizations/$id' | '/organizations' | '/people'
-  id: '__root__' | '/' | '/organizations/$id' | '/organizations/' | '/people/'
+  to: '/' | '/organizations/$id' | '/people/$id' | '/organizations' | '/people'
+  id:
+    | '__root__'
+    | '/'
+    | '/organizations/$id'
+    | '/people/$id'
+    | '/organizations/'
+    | '/people/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OrganizationsIdRoute: typeof OrganizationsIdRoute
+  PeopleIdRoute: typeof PeopleIdRoute
   OrganizationsIndexRoute: typeof OrganizationsIndexRoute
   PeopleIndexRoute: typeof PeopleIndexRoute
 }
@@ -92,6 +113,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrganizationsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/people/$id': {
+      id: '/people/$id'
+      path: '/people/$id'
+      fullPath: '/people/$id'
+      preLoaderRoute: typeof PeopleIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/organizations/$id': {
       id: '/organizations/$id'
       path: '/organizations/$id'
@@ -105,6 +133,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OrganizationsIdRoute: OrganizationsIdRoute,
+  PeopleIdRoute: PeopleIdRoute,
   OrganizationsIndexRoute: OrganizationsIndexRoute,
   PeopleIndexRoute: PeopleIndexRoute,
 }
