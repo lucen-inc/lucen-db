@@ -63,15 +63,8 @@ export const getOrganization = createServerFn({ method: "GET" })
     return (row ?? null) as unknown as OrganizationRow | null;
   });
 
-async function getRole(
-  supabase: {
-    rpc: (
-      fn: "has_role",
-      args: { _user_id: string; _role: "admin" | "editor" | "viewer" },
-    ) => Promise<{ data: boolean | null }>;
-  },
-  userId: string,
-): Promise<"admin" | "editor" | "viewer"> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function getRole(supabase: any, userId: string): Promise<"admin" | "editor" | "viewer"> {
   const [{ data: isAdmin }, { data: isEditor }] = await Promise.all([
     supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
     supabase.rpc("has_role", { _user_id: userId, _role: "editor" }),
