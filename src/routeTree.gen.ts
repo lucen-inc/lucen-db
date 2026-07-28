@@ -14,9 +14,9 @@ import { Route as NewsRouteImport } from './routes/news'
 import { Route as GraphRouteImport } from './routes/graph'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PeopleIndexRouteImport } from './routes/people.index'
-import { Route as OrganizationsIndexRouteImport } from './routes/organizations.index'
 import { Route as PeopleIdRouteImport } from './routes/people.$id'
-import { Route as OrganizationsIdRouteImport } from './routes/organizations.$id'
+import { Route as AuthenticatedOrganizationsIndexRouteImport } from './routes/_authenticated/organizations.index'
+import { Route as AuthenticatedOrganizationsIdRouteImport } from './routes/_authenticated/organizations.$id'
 
 const PipelineRoute = PipelineRouteImport.update({
   id: '/pipeline',
@@ -43,41 +43,43 @@ const PeopleIndexRoute = PeopleIndexRouteImport.update({
   path: '/people/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OrganizationsIndexRoute = OrganizationsIndexRouteImport.update({
-  id: '/organizations/',
-  path: '/organizations/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PeopleIdRoute = PeopleIdRouteImport.update({
   id: '/people/$id',
   path: '/people/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OrganizationsIdRoute = OrganizationsIdRouteImport.update({
-  id: '/organizations/$id',
-  path: '/organizations/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const AuthenticatedOrganizationsIndexRoute =
+  AuthenticatedOrganizationsIndexRouteImport.update({
+    id: '/_authenticated/organizations/',
+    path: '/organizations/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedOrganizationsIdRoute =
+  AuthenticatedOrganizationsIdRouteImport.update({
+    id: '/_authenticated/organizations/$id',
+    path: '/organizations/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/graph': typeof GraphRoute
   '/news': typeof NewsRoute
   '/pipeline': typeof PipelineRoute
-  '/organizations/$id': typeof OrganizationsIdRoute
   '/people/$id': typeof PeopleIdRoute
-  '/organizations/': typeof OrganizationsIndexRoute
   '/people/': typeof PeopleIndexRoute
+  '/organizations/$id': typeof AuthenticatedOrganizationsIdRoute
+  '/organizations/': typeof AuthenticatedOrganizationsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/graph': typeof GraphRoute
   '/news': typeof NewsRoute
   '/pipeline': typeof PipelineRoute
-  '/organizations/$id': typeof OrganizationsIdRoute
   '/people/$id': typeof PeopleIdRoute
-  '/organizations': typeof OrganizationsIndexRoute
   '/people': typeof PeopleIndexRoute
+  '/organizations/$id': typeof AuthenticatedOrganizationsIdRoute
+  '/organizations': typeof AuthenticatedOrganizationsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -85,10 +87,10 @@ export interface FileRoutesById {
   '/graph': typeof GraphRoute
   '/news': typeof NewsRoute
   '/pipeline': typeof PipelineRoute
-  '/organizations/$id': typeof OrganizationsIdRoute
   '/people/$id': typeof PeopleIdRoute
-  '/organizations/': typeof OrganizationsIndexRoute
   '/people/': typeof PeopleIndexRoute
+  '/_authenticated/organizations/$id': typeof AuthenticatedOrganizationsIdRoute
+  '/_authenticated/organizations/': typeof AuthenticatedOrganizationsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -97,30 +99,30 @@ export interface FileRouteTypes {
     | '/graph'
     | '/news'
     | '/pipeline'
-    | '/organizations/$id'
     | '/people/$id'
-    | '/organizations/'
     | '/people/'
+    | '/organizations/$id'
+    | '/organizations/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/graph'
     | '/news'
     | '/pipeline'
-    | '/organizations/$id'
     | '/people/$id'
-    | '/organizations'
     | '/people'
+    | '/organizations/$id'
+    | '/organizations'
   id:
     | '__root__'
     | '/'
     | '/graph'
     | '/news'
     | '/pipeline'
-    | '/organizations/$id'
     | '/people/$id'
-    | '/organizations/'
     | '/people/'
+    | '/_authenticated/organizations/$id'
+    | '/_authenticated/organizations/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -128,10 +130,10 @@ export interface RootRouteChildren {
   GraphRoute: typeof GraphRoute
   NewsRoute: typeof NewsRoute
   PipelineRoute: typeof PipelineRoute
-  OrganizationsIdRoute: typeof OrganizationsIdRoute
   PeopleIdRoute: typeof PeopleIdRoute
-  OrganizationsIndexRoute: typeof OrganizationsIndexRoute
   PeopleIndexRoute: typeof PeopleIndexRoute
+  AuthenticatedOrganizationsIdRoute: typeof AuthenticatedOrganizationsIdRoute
+  AuthenticatedOrganizationsIndexRoute: typeof AuthenticatedOrganizationsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -171,13 +173,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeopleIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/organizations/': {
-      id: '/organizations/'
-      path: '/organizations'
-      fullPath: '/organizations/'
-      preLoaderRoute: typeof OrganizationsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/people/$id': {
       id: '/people/$id'
       path: '/people/$id'
@@ -185,11 +180,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeopleIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/organizations/$id': {
-      id: '/organizations/$id'
+    '/_authenticated/organizations/': {
+      id: '/_authenticated/organizations/'
+      path: '/organizations'
+      fullPath: '/organizations/'
+      preLoaderRoute: typeof AuthenticatedOrganizationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/organizations/$id': {
+      id: '/_authenticated/organizations/$id'
       path: '/organizations/$id'
       fullPath: '/organizations/$id'
-      preLoaderRoute: typeof OrganizationsIdRouteImport
+      preLoaderRoute: typeof AuthenticatedOrganizationsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -200,10 +202,10 @@ const rootRouteChildren: RootRouteChildren = {
   GraphRoute: GraphRoute,
   NewsRoute: NewsRoute,
   PipelineRoute: PipelineRoute,
-  OrganizationsIdRoute: OrganizationsIdRoute,
   PeopleIdRoute: PeopleIdRoute,
-  OrganizationsIndexRoute: OrganizationsIndexRoute,
   PeopleIndexRoute: PeopleIndexRoute,
+  AuthenticatedOrganizationsIdRoute: AuthenticatedOrganizationsIdRoute,
+  AuthenticatedOrganizationsIndexRoute: AuthenticatedOrganizationsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -25,7 +25,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
-export const Route = createFileRoute("/organizations/$id")({
+export const Route = createFileRoute("/_authenticated/organizations/$id")({
   loader: ({ params }) => {
     const org = orgById(params.id);
     if (!org) throw notFound();

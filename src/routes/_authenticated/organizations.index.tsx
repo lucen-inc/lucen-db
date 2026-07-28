@@ -12,7 +12,7 @@ import {
 import { Search, SlidersHorizontal, Download, Plus, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/organizations/")({
+export const Route = createFileRoute("/_authenticated/organizations/")({
   head: () => ({
     meta: [{ title: "Organizations · LID" }],
   }),
