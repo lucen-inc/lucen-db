@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Building2,
@@ -9,10 +9,14 @@ import {
   FileText,
   Command,
   Sparkles,
+  LogOut,
+  LogIn,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CommandPalette } from "./command-palette";
 import { useEffect, useState, type ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 type NavItem = {
   to: string;
@@ -32,7 +36,10 @@ const nav: NavItem[] = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [cmdOpen, setCmdOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -44,6 +51,27 @@ export function AppShell({ children }: { children: ReactNode }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      setUserEmail(session?.user?.email ?? null);
+      router.invalidate();
+      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [router, queryClient]);
+
+  const isAuthPage = pathname === "/auth";
+  if (isAuthPage) return <>{children}</>;
+
+  async function signOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    router.navigate({ to: "/auth", replace: true });
+  }
 
   return (
     <div className="dark min-h-screen text-foreground">
@@ -117,15 +145,31 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
 
           <div className="border-t border-border/60 px-4 py-3">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-holo to-cyan text-[11px] font-semibold text-black">
-                NM
+            {userEmail ? (
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-holo to-cyan text-[11px] font-semibold text-black">
+                  {userEmail.slice(0, 2).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[12px] font-medium">{userEmail}</div>
+                  <div className="truncate text-[10.5px] text-muted-foreground">Signed in</div>
+                </div>
+                <button
+                  onClick={signOut}
+                  aria-label="Sign out"
+                  className="rounded-md p-1.5 text-muted-foreground hover:bg-elevated/60 hover:text-foreground"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                </button>
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[12px] font-medium">N. Al Mansouri</div>
-                <div className="truncate text-[10.5px] text-muted-foreground">Admin · Sales</div>
-              </div>
-            </div>
+            ) : (
+              <Link
+                to="/auth"
+                className="flex items-center justify-center gap-2 rounded-lg border border-cyan/40 bg-cyan/10 px-3 py-2 text-[12.5px] font-medium text-cyan hover:bg-cyan/20"
+              >
+                <LogIn className="h-3.5 w-3.5" /> Sign in
+              </Link>
+            )}
           </div>
         </aside>
 
