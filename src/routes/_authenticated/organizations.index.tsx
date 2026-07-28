@@ -1,31 +1,78 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useQuery, useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/lid/app-shell";
 import { EntityAvatar } from "@/components/lid/score-ring";
+import { OrgFormDialog } from "@/components/lid/org-form-dialog";
 import {
-  industries,
-  organizations,
-  pipelineStages,
-  type OrgIndustry,
-  type PipelineStage,
-} from "@/lib/mock-data";
+  listOrganizations,
+  getMyRole,
+  createOrganization,
+  type OrganizationRow,
+} from "@/lib/organizations.functions";
+import { industries, pipelineStages } from "@/lib/organizations.schema";
 import { Search, SlidersHorizontal, Download, Plus, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/organizations/")({
   head: () => ({
-    meta: [{ title: "Organizations · LID" }],
+    meta: [
+      { title: "Organizations · Lucen Intelligence Database" },
+      { name: "description", content: "Every organization Lucen tracks — searchable, filterable, editable." },
+    ],
   }),
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData({
+        queryKey: ["organizations"],
+        queryFn: () => listOrganizations(),
+      }),
+      context.queryClient.ensureQueryData({
+        queryKey: ["my-role"],
+        queryFn: () => getMyRole(),
+      }),
+    ]);
+  },
   component: OrganizationsPage,
 });
 
 function OrganizationsPage() {
+  const router = useRouter();
+  const listFn = useServerFn(listOrganizations);
+  const roleFn = useServerFn(getMyRole);
+  const createFn = useServerFn(createOrganization);
+
+  const { data: orgs } = useSuspenseQuery({
+    queryKey: ["organizations"],
+    queryFn: () => listFn(),
+  });
+  const { data: role } = useQuery({
+    queryKey: ["my-role"],
+    queryFn: () => roleFn(),
+  });
+
+  const canEdit = role === "admin" || role === "editor";
+
   const [q, setQ] = useState("");
-  const [industry, setIndustry] = useState<OrgIndustry | "All">("All");
-  const [stage, setStage] = useState<PipelineStage | "All">("All");
+  const [industry, setIndustry] = useState<string>("All");
+  const [stage, setStage] = useState<string>("All");
+  const [creating, setCreating] = useState(false);
+
+  const createMutation = useMutation({
+    mutationFn: async (input: Parameters<typeof createOrganization>[0]["data"]) =>
+      createFn({ data: input }),
+    onSuccess: () => {
+      toast.success("Organization created.");
+      setCreating(false);
+      router.invalidate();
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
   const filtered = useMemo(() => {
-    return organizations.filter((o) => {
+    return orgs.filter((o) => {
       if (industry !== "All" && o.industry !== industry) return false;
       if (stage !== "All" && o.stage !== stage) return false;
       if (q) {
@@ -41,28 +88,32 @@ function OrganizationsPage() {
       }
       return true;
     });
-  }, [q, industry, stage]);
+  }, [orgs, q, industry, stage]);
 
   return (
     <div>
       <PageHeader
         eyebrow="Entities"
         title="Organizations"
-        description="Every company, brand, authority, developer and institution Lucen tracks."
+        description={`Every company Lucen tracks. You are signed in as ${role ?? "…"}.`}
         actions={
           <>
             <button className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-elevated px-3 py-1.5 text-[12px] hover:border-cyan/40">
               <Download className="h-3.5 w-3.5" /> Export
             </button>
-            <button className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-medium text-primary-foreground hover:opacity-90">
-              <Plus className="h-3.5 w-3.5" /> New organization
-            </button>
+            {canEdit && (
+              <button
+                onClick={() => setCreating(true)}
+                className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-medium text-primary-foreground hover:opacity-90"
+              >
+                <Plus className="h-3.5 w-3.5" /> New organization
+              </button>
+            )}
           </>
         }
       />
 
       <div className="px-8 py-6">
-        {/* Filter bar */}
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <div className="relative flex-1 min-w-[280px]">
             <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -70,38 +121,25 @@ function OrganizationsPage() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search name, country, industry, tag…"
-              className="w-full rounded-lg border border-border/60 bg-elevated/60 py-2 pl-9 pr-3 text-[13px] outline-none transition placeholder:text-muted-foreground/60 focus:border-cyan/50"
+              className="w-full rounded-lg border border-border/60 bg-elevated/60 py-2 pl-9 pr-3 text-[13px] outline-none placeholder:text-muted-foreground/60 focus:border-cyan/50"
             />
           </div>
-          <FilterPill
-            label="Industry"
-            value={industry}
-            options={["All", ...industries] as const}
-            onChange={(v) => setIndustry(v as OrgIndustry | "All")}
-          />
-          <FilterPill
-            label="Stage"
-            value={stage}
-            options={["All", ...pipelineStages] as const}
-            onChange={(v) => setStage(v as PipelineStage | "All")}
-          />
+          <FilterPill label="Industry" value={industry} options={["All", ...industries]} onChange={setIndustry} />
+          <FilterPill label="Stage" value={stage} options={["All", ...pipelineStages]} onChange={setStage} />
           <button className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-elevated/60 px-3 py-2 text-[12px] hover:border-cyan/40">
             <SlidersHorizontal className="h-3.5 w-3.5" /> More filters
           </button>
           <div className="ml-auto text-[11.5px] text-muted-foreground">
-            {filtered.length} of {organizations.length}
+            {filtered.length} of {orgs.length}
           </div>
         </div>
 
-        {/* Table */}
         <div className="glass overflow-hidden rounded-2xl">
           <div className="overflow-x-auto">
             <table className="w-full text-[13px]">
               <thead>
                 <tr className="border-b border-border/60 bg-white/[0.02] text-[10.5px] uppercase tracking-wider text-muted-foreground">
-                  <th className="sticky left-0 z-10 bg-panel/70 px-4 py-3 text-left font-medium backdrop-blur">
-                    Organization
-                  </th>
+                  <th className="sticky left-0 z-10 bg-panel/70 px-4 py-3 text-left font-medium backdrop-blur">Organization</th>
                   <th className="px-4 py-3 text-left font-medium">Industry</th>
                   <th className="px-4 py-3 text-left font-medium">HQ</th>
                   <th className="px-4 py-3 text-right font-medium">Employees</th>
@@ -112,11 +150,10 @@ function OrganizationsPage() {
                   <th className="px-4 py-3 text-right font-medium">Luxury</th>
                   <th className="px-4 py-3 text-right font-medium">Priority</th>
                   <th className="px-4 py-3 text-left font-medium">Owner</th>
-                  <th className="px-4 py-3 text-right font-medium">Updated</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
-                {filtered.map((o, i) => (
+                {filtered.map((o: OrganizationRow, i) => (
                   <tr
                     key={o.id}
                     className={cn(
@@ -130,18 +167,10 @@ function OrganizationsPage() {
                         params={{ id: o.id }}
                         className="flex items-center gap-3"
                       >
-                        <EntityAvatar
-                          logo={o.logo}
-                          size={32}
-                          hue={195 + (o.name.length % 60)}
-                        />
+                        <EntityAvatar logo={o.logo ?? o.name.slice(0, 2).toUpperCase()} size={32} hue={195 + (o.name.length % 60)} />
                         <div className="min-w-0">
-                          <div className="truncate font-medium group-hover:text-cyan">
-                            {o.name}
-                          </div>
-                          <div className="truncate text-[11px] text-muted-foreground">
-                            {o.subIndustry}
-                          </div>
+                          <div className="truncate font-medium group-hover:text-cyan">{o.name}</div>
+                          <div className="truncate text-[11px] text-muted-foreground">{o.sub_industry}</div>
                         </div>
                       </Link>
                     </td>
@@ -153,35 +182,34 @@ function OrganizationsPage() {
                     <td className="px-4 py-3 text-muted-foreground">
                       {o.hq}, {o.country}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums">
-                      {o.employees.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums">
-                      {o.revenue}
-                    </td>
-                    <td className="px-4 py-3">
-                      <StageDot stage={o.stage} />
-                    </td>
-                    <ScoreCell v={o.scores.lead} hue={210} />
-                    <ScoreCell v={o.scores.innovation} hue={155} />
-                    <ScoreCell v={o.scores.luxury} hue={40} />
-                    <ScoreCell v={o.scores.priority} hue={195} strong />
-                    <td className="px-4 py-3 text-muted-foreground">{o.owner}</td>
-                    <td className="px-4 py-3 text-right text-[11.5px] text-muted-foreground">
-                      {o.updatedAt}
-                    </td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums">{o.employees.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums">{o.revenue ?? "—"}</td>
+                    <td className="px-4 py-3"><StageDot stage={o.stage} /></td>
+                    <ScoreCell v={o.score_lead} hue={210} />
+                    <ScoreCell v={o.score_innovation} hue={155} />
+                    <ScoreCell v={o.score_luxury} hue={40} />
+                    <ScoreCell v={o.score_priority} hue={195} strong />
+                    <td className="px-4 py-3 text-muted-foreground">{o.owner ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
           {filtered.length === 0 && (
-            <div className="p-12 text-center text-[13px] text-muted-foreground">
-              No organizations match these filters.
-            </div>
+            <div className="p-12 text-center text-[13px] text-muted-foreground">No organizations match these filters.</div>
           )}
         </div>
       </div>
+
+      {creating && (
+        <OrgFormDialog
+          title="New organization"
+          submitLabel={createMutation.isPending ? "Creating…" : "Create"}
+          disabled={createMutation.isPending}
+          onCancel={() => setCreating(false)}
+          onSubmit={(values) => createMutation.mutate(values)}
+        />
+      )}
     </div>
   );
 }
@@ -200,12 +228,7 @@ function ScoreCell({ v, hue, strong }: { v: number; hue: number; strong?: boolea
             }}
           />
         </div>
-        <span
-          className={cn(
-            "font-mono text-[11.5px] tabular-nums",
-            strong ? "text-foreground" : "text-muted-foreground",
-          )}
-        >
+        <span className={cn("font-mono text-[11.5px] tabular-nums", strong ? "text-foreground" : "text-muted-foreground")}>
           {v}
         </span>
       </div>
@@ -214,15 +237,7 @@ function ScoreCell({ v, hue, strong }: { v: number; hue: number; strong?: boolea
 }
 
 function StageDot({ stage }: { stage: string }) {
-  const hue = {
-    Prospect: 210,
-    Qualified: 240,
-    Meeting: 270,
-    Proposal: 40,
-    Negotiation: 20,
-    Won: 155,
-    Lost: 0,
-  }[stage] ?? 210;
+  const hue = ({ Prospect: 210, Qualified: 240, Meeting: 270, Proposal: 40, Negotiation: 20, Won: 155, Lost: 0 } as Record<string, number>)[stage] ?? 210;
   return (
     <span
       className="inline-flex items-center gap-1.5 rounded-md border px-1.5 py-0.5 text-[10.5px]"
@@ -232,25 +247,22 @@ function StageDot({ stage }: { stage: string }) {
         color: `hsl(${hue} 90% 78%)`,
       }}
     >
-      <span
-        className="h-1.5 w-1.5 rounded-full"
-        style={{ background: `hsl(${hue} 90% 60%)` }}
-      />
+      <span className="h-1.5 w-1.5 rounded-full" style={{ background: `hsl(${hue} 90% 60%)` }} />
       {stage}
     </span>
   );
 }
 
-function FilterPill<T extends string>({
+function FilterPill({
   label,
   value,
   options,
   onChange,
 }: {
   label: string;
-  value: T;
-  options: readonly T[];
-  onChange: (v: T) => void;
+  value: string;
+  options: readonly string[];
+  onChange: (v: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -264,10 +276,7 @@ function FilterPill<T extends string>({
       </button>
       {open && (
         <>
-          <div
-            className="fixed inset-0 z-20"
-            onClick={() => setOpen(false)}
-          />
+          <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} />
           <div className="glass-strong absolute left-0 top-full z-30 mt-1 max-h-72 w-48 overflow-y-auto rounded-lg p-1 shadow-2xl">
             {options.map((opt) => (
               <button
