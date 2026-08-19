@@ -173,6 +173,12 @@ export const updateOrganization = createServerFn({ method: "POST" })
       throw new Error(`Another organization already uses that name: "${row.name}".`);
     }
 
+    const { data: before } = await context.supabase
+      .from("organizations" as never)
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+
     const { data: updated, error } = await context.supabase
       .from("organizations" as never)
       .update(data.patch as never)
@@ -180,7 +186,25 @@ export const updateOrganization = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) throw new Error(error.message);
-    return updated as unknown as OrganizationRow;
+    const row = updated as unknown as OrganizationRow;
+
+    const beforeRow = (before ?? null) as unknown as Record<string, unknown> | null;
+    const changes = diffFields(
+      beforeRow
+        ? Object.fromEntries(
+            Object.keys(data.patch).map((k) => [k, beforeRow[k]]),
+          )
+        : null,
+      data.patch as unknown as Record<string, unknown>,
+    );
+    if (changes.length) {
+      await recordAudit(
+        context.supabase,
+        { id: context.userId, email: context.claims?.email as string | undefined },
+        { action: "updated", entityId: row.id, entityName: row.name, changes },
+      );
+    }
+    return row;
   });
 
 export const deleteOrganization = createServerFn({ method: "POST" })
