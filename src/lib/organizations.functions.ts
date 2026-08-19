@@ -134,7 +134,18 @@ export const createOrganization = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) throw new Error(error.message);
-    return inserted as unknown as OrganizationRow;
+    const row = inserted as unknown as OrganizationRow;
+    await recordAudit(
+      context.supabase,
+      { id: context.userId, email: context.claims?.email as string | undefined },
+      {
+        action: "created",
+        entityId: row.id,
+        entityName: row.name,
+        changes: diffFields(null, data as unknown as Record<string, unknown>),
+      },
+    );
+    return row;
   });
 
 export const updateOrganization = createServerFn({ method: "POST" })
