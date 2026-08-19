@@ -1,11 +1,34 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { diffFields, type AuditAction, type AuditChange } from "./audit";
 import {
   organizationInputSchema,
   normalizeOrgName,
   type OrganizationInput,
 } from "./organizations.schema";
+
+async function recordAudit(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  actor: { id: string; email?: string | null },
+  entry: {
+    action: AuditAction;
+    entityId: string | null;
+    entityName: string | null;
+    changes: AuditChange[];
+  },
+) {
+  await supabase.from("audit_log").insert({
+    actor_id: actor.id,
+    actor_email: actor.email ?? null,
+    action: entry.action,
+    entity_type: "organization",
+    entity_id: entry.entityId,
+    entity_name: entry.entityName,
+    changes: entry.changes,
+  });
+}
 
 export type OrganizationRow = {
   id: string;
