@@ -215,10 +215,98 @@ export const deleteOrganization = createServerFn({ method: "POST" })
     if (role !== "admin") {
       throw new Error("Only admins can delete organizations.");
     }
+    const { data: before } = await context.supabase
+      .from("organizations" as never)
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+
     const { error } = await context.supabase
       .from("organizations" as never)
       .delete()
       .eq("id", data.id);
     if (error) throw new Error(error.message);
+
+    const beforeRow = (before ?? null) as unknown as OrganizationRow | null;
+    await recordAudit(
+      context.supabase,
+      { id: context.userId, email: context.claims?.email as string | undefined },
+      {
+        action: "deleted",
+        entityId: data.id,
+        entityName: beforeRow?.name ?? null,
+        changes: diffFields(beforeRow as unknown as Record<string, unknown> | null, null),
+      },
+    );
+    return { ok: true };
+  });
+
+export const mergeOrganizations = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { keepId: string; mergeId: string }) =>
+    z.object({ keepId: z.string().uuid(), mergeId: z.string().uuid() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const role = await getRole(context.supabase, context.userId);
+    if (role !== "admin") throw new Error("Only admins can merge organizations.");
+    if (data.keepId === data.mergeId) throw new Error("Pick two different organizations.");
+
+    const { data: rows, error: readErr } = await context.supabase
+      .from("organizations" as never)
+      .select("*")
+      .in("id", [data.keepId, data.mergeId]);
+    if (readErr) throw new Error(readErr.message);
+    const list = (rows ?? []) as unknown as OrganizationRow[];
+    const keep = list.find((r) => r.id === data.keepId);
+    const merge = list.find((r) => r.id === data.mergeId);
+    if (!keep || !merge) throw new Error("Organization not found.");
+
+    const patch = {
+      countries: Array.from(new Set([...keep.countries, ...merge.countries])),
+      tags: Array.from(new Set([...keep.tags, ...merge.tags])),
+      employees: Math.max(keep.employees, merge.employees),
+      locations: Math.max(keep.locations, merge.locations),
+      description: keep.description ?? merge.description,
+      website: keep.website ?? merge.website,
+      revenue: keep.revenue ?? merge.revenue,
+      founded: keep.founded ?? merge.founded,
+    };
+
+    const { error: updErr } = await context.supabase
+      .from("organizations" as never)
+      .update(patch as never)
+      .eq("id", data.keepId);
+    if (updErr) throw new Error(updErr.message);
+
+    await context.supabase
+      .from("organizations" as never)
+      .update({ parent_id: null } as never)
+      .eq("parent_id", data.mergeId);
+
+    const { error: delErr } = await context.supabase
+      .from("organizations" as never)
+      .delete()
+      .eq("id", data.mergeId);
+    if (delErr) throw new Error(delErr.message);
+
+    await recordAudit(
+      context.supabase,
+      { id: context.userId, email: context.claims?.email as string | undefined },
+      {
+        action: "merged",
+        entityId: keep.id,
+        entityName: keep.name,
+        changes: [
+          { field: "merged_from", from: merge.name, to: keep.name },
+          ...diffFields(
+            Object.fromEntries(
+              Object.keys(patch).map((k) => [k, (keep as unknown as Record<string, unknown>)[k]]),
+            ),
+            patch as unknown as Record<string, unknown>,
+          ),
+        ],
+      },
+    );
+
     return { ok: true };
   });
